@@ -12,7 +12,6 @@ import (
 
 func main() {
 	// Определяем директорию приложения и проверяем наличие базы данных
-	// Определение пути к базе данных
 	appPath, err := os.Executable()
 	if err != nil {
 		log.Fatal(err)
@@ -28,28 +27,25 @@ func main() {
 	// если install равен true, после открытия БД требуется выполнить
 	// sql-запрос с CREATE TABLE и CREATE INDEX
 
-	db, err := sql.Open("sqlite", "scheduler.db")
-	if err != nil {
-		log.Fatal(err)
-	}
 	// создаем таблицу и индекс
 	if install {
-		newTable := `CREATE TABLE IF NOT EXISTS scheduler (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date CHAR(8) NOT NULL,
-        title TEXT NOT NULL,
-        comment TEXT,
-        repeat TEXT CHECK (length(repeat) <= 128)
-        );`
-
-		_, err = db.Exec(newTable)
+		db, err := sql.Open("sqlite", "scheduler.db")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		newIndex := `CREATE INDEX IF NOT EXISTS scheduler_date ON scheduler (date);`
+		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS scheduler (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			date CHAR(8) NOT NULL,
+			title TEXT NOT NULL,
+			comment TEXT,
+			repeat VARCHAR(128) NOT NULL
+			);`)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		_, err = db.Exec(newIndex)
+		_, err = db.Exec(`CREATE INDEX IF NOT EXISTS scheduler_date ON scheduler (date);`)
 		if err != nil {
 			log.Fatal(err)
 		}
