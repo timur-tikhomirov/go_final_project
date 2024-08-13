@@ -1,24 +1,77 @@
 package main
 
 import (
+	"database/sql"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+
+	_ "modernc.org/sqlite"
 )
 
 func main() {
+	// Определяем директорию приложения и проверяем наличие базы данных
+	// Определение пути к базе данных
+	appPath, err := os.Executable()
+	if err != nil {
+		log.Fatal(err)
+	}
+	dbFile := filepath.Join(filepath.Dir(appPath), "scheduler.db")
+	log.Println(dbFile)
+	_, err = os.Stat(dbFile)
+
+	var install bool
+	if err != nil {
+		install = true
+	}
+	// если install равен true, после открытия БД требуется выполнить
+	// sql-запрос с CREATE TABLE и CREATE INDEX
+
+	db, err := sql.Open("sqlite", "scheduler.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// создаем таблицу и индекс
+	if install {
+		newTable := `CREATE TABLE IF NOT EXISTS scheduler (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date CHAR(8) NOT NULL,
+        title TEXT NOT NULL,
+        comment TEXT,
+        repeat TEXT CHECK (length(repeat) <= 128)
+        );`
+
+		_, err = db.Exec(newTable)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		newIndex := `CREATE INDEX IF NOT EXISTS scheduler_date ON scheduler (date);`
+
+		_, err = db.Exec(newIndex)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("База данных создана")
+	} else {
+		log.Println("База данных была создана ранее")
+	}
+
 	// Определяем порт из окружения, если переменная окружения отсутствует - устанавливаем порт по умолчанию
-	//port := "7540"
-	//envPort := os.Getenv("TODO_PORT")
-	//if len(envPort) != 0 {
-	//	port = envPort
-	//}
-	//port = ":" + port
+	port := "7540"
+	envPort := os.Getenv("TODO_PORT")
+	if len(envPort) != 0 {
+		port = envPort
+	}
+	port = ":" + port
 
 	// Обрабатываем запрос
 	webDir := "./web"
 	fileServer := http.FileServer(http.Dir(webDir))
 	http.Handle("/", fileServer)
 
-	err := http.ListenAndServe(":7540", nil)
+	err = http.ListenAndServe(":7540", nil)
 	if err != nil {
 		panic(err)
 	}
