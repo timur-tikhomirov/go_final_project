@@ -26,13 +26,12 @@ func main() {
 	}
 	// если install равен true, после открытия БД требуется выполнить
 	// sql-запрос с CREATE TABLE и CREATE INDEX
-
+	db, err := sql.Open("sqlite", "scheduler.db")
+	if err != nil {
+		log.Fatal(err)
+	}
 	// создаем таблицу и индекс
 	if install {
-		db, err := sql.Open("sqlite", "scheduler.db")
-		if err != nil {
-			log.Fatal(err)
-		}
 
 		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS scheduler (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
