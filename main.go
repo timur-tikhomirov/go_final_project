@@ -65,6 +65,7 @@ func main() {
 	webDir := "./web"
 	fileServer := http.FileServer(http.Dir(webDir))
 	http.Handle("/", fileServer)
+	http.HandleFunc("/api/nextdate", nextDateHandler)
 
 	err = http.ListenAndServe(":7540", nil)
 	if err != nil {
