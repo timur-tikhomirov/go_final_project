@@ -10,6 +10,8 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+var DB *sql.DB
+
 func main() {
 	// Определяем директорию приложения и проверяем наличие базы данных
 	appPath, err := os.Executable()
@@ -26,14 +28,14 @@ func main() {
 	}
 	// если install равен true, после открытия БД требуется выполнить
 	// sql-запрос с CREATE TABLE и CREATE INDEX
-	db, err := sql.Open("sqlite", "scheduler.db")
+	DB, err = sql.Open("sqlite", "scheduler.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	// создаем таблицу и индекс
 	if install {
 
-		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS scheduler (
+		_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS scheduler (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			date CHAR(8) NOT NULL,
 			title TEXT NOT NULL,
@@ -44,7 +46,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		_, err = db.Exec(`CREATE INDEX IF NOT EXISTS scheduler_date ON scheduler (date);`)
+		_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS scheduler_date ON scheduler (date);`)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -54,7 +56,7 @@ func main() {
 	}
 
 	// Определяем порт из окружения, если переменная окружения отсутствует - устанавливаем порт по умолчанию
-	port := "7540"
+	port := DefaultPort
 	envPort := os.Getenv("TODO_PORT")
 	if len(envPort) != 0 {
 		port = envPort
@@ -65,7 +67,8 @@ func main() {
 	webDir := "./web"
 	fileServer := http.FileServer(http.Dir(webDir))
 	http.Handle("/", fileServer)
-	http.HandleFunc("/api/nextdate", nextDateHandler)
+	http.HandleFunc("/api/nextdate", NextDateHandler)
+	http.HandleFunc("/api/task", TaskHandler)
 
 	err = http.ListenAndServe(":7540", nil)
 	if err != nil {
