@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 )
@@ -16,7 +17,7 @@ func NextDateHandler(res http.ResponseWriter, req *http.Request) {
 
 	nowTime, err := time.Parse(DateFormat, now)
 	if err != nil {
-		http.Error(res, "неверный формат текущей даты", http.StatusBadRequest)
+		http.Error(res, "Некорректный формат даты", http.StatusBadRequest)
 		return
 	}
 	nextDate, err := NextDate(nowTime, date, repeat)
@@ -39,7 +40,7 @@ func TaskHandler(res http.ResponseWriter, req *http.Request) {
 	case http.MethodPost:
 		taskPostHandler(res, req)
 	default:
-		http.Error(res, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(res, "Метод не поддерживается", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -51,7 +52,9 @@ func taskPostHandler(res http.ResponseWriter, req *http.Request) {
 
 	err := json.NewDecoder(req.Body).Decode(&task)
 	if err != nil {
-		http.Error(res, err.Error(), http.StatusBadRequest)
+		err := errors.New("Ошибка десериализации JSON")
+		ErrorResponse.Error = err.Error()
+		json.NewEncoder(res).Encode(ErrorResponse)
 		return
 	}
 
@@ -59,28 +62,33 @@ func taskPostHandler(res http.ResponseWriter, req *http.Request) {
 
 	// Проверяем обязательное поле Title
 	if task.Title == "" {
-		http.Error(res, "пустое поле Title", http.StatusBadRequest)
+		err := errors.New("Не указан заголовок задачи")
+		ErrorResponse.Error = err.Error()
+		json.NewEncoder(res).Encode(ErrorResponse)
 		return
 	}
 
 	// Проверяем наличие даты
-	date := task.Date
-	if date == "" {
-		date = time.Now().Format(DateFormat)
+	if task.Date == "" {
+		task.Date = time.Now().Format(DateFormat)
 	}
 
-	startDate, err := time.Parse(DateFormat, date)
+	startDate, err := time.Parse(DateFormat, task.Date)
 	if err != nil {
-		http.Error(res, "неверный формат даты", http.StatusBadRequest)
+		err := errors.New("Некорректный формат даты")
+		ErrorResponse.Error = err.Error()
+		json.NewEncoder(res).Encode(ErrorResponse)
 		return
 	}
 
-	// Если дата меньше текущей, устанавливаем следующую дату по правилу
+	// Если дата меньше сегодняшней, устанавливаем следующую дату по правилу
 	if startDate.Before(time.Now()) {
 		if task.Repeat != "" {
-			nextDate, err := NextDate(time.Now(), date, task.Repeat)
+			nextDate, err := NextDate(time.Now(), task.Date, task.Repeat)
 			if err != nil {
-				http.Error(res, "ошибка определения даты", http.StatusBadRequest)
+				err := errors.New("Правило повторения указано в неправильном формате")
+				ErrorResponse.Error = err.Error()
+				json.NewEncoder(res).Encode(ErrorResponse)
 				return
 			}
 			task.Date = nextDate
@@ -93,14 +101,14 @@ func taskPostHandler(res http.ResponseWriter, req *http.Request) {
 	query := `INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)`
 	result, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
 	if err != nil {
-		http.Error(res, "не удалось добавить задачу", http.StatusInternalServerError)
+		http.Error(res, "Не удалось добавить задачу", http.StatusInternalServerError)
 		return
 	}
 
 	// Получаем идентификатор добавленной задачи
 	id, err := result.LastInsertId()
 	if err != nil {
-		http.Error(res, "не получить id добавленной задачи", http.StatusInternalServerError)
+		http.Error(res, "Не удалось вернуть id новой задачи", http.StatusInternalServerError)
 		return
 	}
 

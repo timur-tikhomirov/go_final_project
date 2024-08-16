@@ -11,3 +11,7 @@ type Task struct {
 	Comment string `json:"comment"`
 	Repeat  string `json:"repeat"`
 }
+
+var ErrorResponse struct {
+	Error string `json:"error,omitempty"`
+}
