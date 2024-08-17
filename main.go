@@ -63,15 +63,17 @@ func main() {
 	}
 	port = ":" + port
 
-	// Обрабатываем запрос
-	webDir := "./web"
-	fileServer := http.FileServer(http.Dir(webDir))
+	// Устанавливаем директорию
+
+	fileServer := http.FileServer(http.Dir(WebDir))
+	// Обрабатываем запросы
 	http.Handle("/", fileServer)
 	http.HandleFunc("/api/nextdate", NextDateHandler)
 	http.HandleFunc("/api/task", TaskHandler)
-	http.HandleFunc("/api/tasks", GetTasksHandler)
+	http.HandleFunc("/api/tasks", TasksGetHandler)
+	http.HandleFunc("/api/task/done", TaskDoneHandler)
 
-	err = http.ListenAndServe(":7540", nil)
+	err = http.ListenAndServe(port, nil)
 	if err != nil {
 		panic(err)
 	}
