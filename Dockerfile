@@ -1,4 +1,4 @@
-FROM golang:1.23
+FROM golang:1.22.1
 
 ENV CGO_ENABLED=0
 ENV GOOS=linux
@@ -9,10 +9,10 @@ WORKDIR /app
 
 COPY . .
 
-RUN go mod tidy
+RUN go mod download
 
 EXPOSE ${TODO_PORT}
 
-RUN  go build -o /my_app
+RUN  go build -C cmd -o task_manager_server
 
-CMD ["/my_app"]
+CMD ["./cmd/task_manager_server"]
