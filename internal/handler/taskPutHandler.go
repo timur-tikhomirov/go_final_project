@@ -17,7 +17,7 @@ func TaskPutHandler(store storage.Store) http.HandlerFunc {
 			http.Error(res, `{"error":"Ошибка десериализации JSON"}`, http.StatusBadRequest)
 			return
 		}
-		err = store.PutTask(t)
+		err = store.UpdateTask(t)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return

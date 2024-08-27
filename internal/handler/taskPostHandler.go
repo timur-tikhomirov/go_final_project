@@ -17,7 +17,7 @@ func TaskPostHandler(store storage.Store) http.HandlerFunc {
 			http.Error(res, `{"error":"Ошибка десериализации JSON"}`, http.StatusBadRequest)
 			return
 		}
-		id, err := store.PostTask(t)
+		id, err := store.CreateTask(t)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return

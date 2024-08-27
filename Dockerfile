@@ -13,6 +13,6 @@ RUN go mod download
 
 EXPOSE ${TODO_PORT}
 
-RUN  go build -C cmd -o task_manager_server
+RUN  go build -o task_manager_server
 
-CMD ["./cmd/task_manager_server"]
+CMD ["/task_manager_server"]

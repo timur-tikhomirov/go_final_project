@@ -5,10 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-)
 
-const (
-	dateFormat = "20060102"
+	"github.com/timur-tikhomirov/go_final_project/configs"
 )
 
 func NextDate(now time.Time, date string, repeat string) (string, error) {
@@ -17,7 +15,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		return "", fmt.Errorf("не указан repeat")
 	}
 
-	startDate, err := time.Parse(dateFormat, date)
+	startDate, err := time.Parse(configs.DateFormat, date)
 	//проверка на неверный формат даты
 	if err != nil {
 		return "", fmt.Errorf("неверный формат даты: %v", err)
@@ -47,7 +45,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		for newDate.Before(now) {
 			newDate = newDate.AddDate(0, 0, daysToMove)
 		}
-		return newDate.Format(dateFormat), nil
+		return newDate.Format(configs.DateFormat), nil
 
 	case "y":
 		newDate := startDate.AddDate(1, 0, 0)
@@ -55,7 +53,7 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		for newDate.Before(now) {
 			newDate = newDate.AddDate(1, 0, 0)
 		}
-		return newDate.Format(dateFormat), nil
+		return newDate.Format(configs.DateFormat), nil
 
 	default:
 		return "", fmt.Errorf("некорректный тип правила")

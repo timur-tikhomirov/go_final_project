@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/timur-tikhomirov/go_final_project/configs"
 	"github.com/timur-tikhomirov/go_final_project/internal/handler"
@@ -26,17 +25,9 @@ func main() {
 		port = envPort
 	}
 	port = ":" + port
-	// Определяем директорию приложения
-	filePath, err := os.Executable()
-	if err != nil {
-		log.Fatal(err)
-	}
-	//Определяем корневую папку проекта
-	projectPath := strings.TrimRight(filePath, "/cmd")
-	log.Println("Директория проекта", projectPath)
 
 	// Создаем хендлер для файлов фронта
-	fileServer := http.FileServer(http.Dir(projectPath + configs.WebDir))
+	fileServer := http.FileServer(http.Dir(configs.WebDir))
 	// Обрабатываем запросы
 	http.Handle("/", fileServer)
 	http.HandleFunc("/api/nextdate", handler.NextDateHandler)
@@ -49,7 +40,7 @@ func main() {
 
 	log.Println("Приложение запущено на порту", port)
 
-	err = http.ListenAndServe(port, nil)
+	err := http.ListenAndServe(port, nil)
 	if err != nil {
 		panic(err)
 	}
